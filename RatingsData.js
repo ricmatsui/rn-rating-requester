@@ -1,9 +1,11 @@
 import React, { AsyncStorage } from 'react-native';
 
 const keyPrefix = '@RatingRequestData.';
-const eventCountKey = keyPrefix + 'positiveEventCount';
+const eventCountKey = keyPrefix + 'EventCount';
+const usesCountKey = keyPrefix + 'usesCount';
 const ratedTimestamp = keyPrefix + 'ratedTimestamp';
 const declinedTimestamp = keyPrefix + 'declinedTimestamp';
+const lastSeenTimestamp = keyPrefix + 'lastSeenTimestamp';
 
 /**
  * Private class that let's us interact with AsyncStorage on the device
@@ -15,35 +17,59 @@ class RatingsData {
 		this.initialize();
 	}
 
-	// Get current count of positive events
-	async getCount() {
+	async getKey(key) {
 		try {
-			let countString = await AsyncStorage.getItem(eventCountKey);
-			return parseInt(countString, 10);
+			let string = await AsyncStorage.getItem(key);
+			return parseInt(string, 10);
 		} catch (ex) {
-			console.warn('Couldn\'t retrieve positive events count. Error:', ex);
+			console.warn('Couldn\'t retrieve ' + key + '. Error:', ex);
 		}
 	}
 
-	// Increment count of positive events
-	async incrementCount() {
+	async incrementKey(key) {
 		try {
-			let currentCount = await this.getCount();
-			await AsyncStorage.setItem(eventCountKey, (currentCount + 1).toString());
+			let currentCount = await this.getKey(key);
+			await AsyncStorage.setItem(key, (currentCount + 1).toString());
 
 			return currentCount + 1;
 		} catch (ex) {
-			console.warn('Could not increment count. Error:', ex);
+			console.warn('Could not increment count' + key + '. Error:', ex);
 		}
+	}
+
+	async getUsesCount() {
+		return await this.getKey(usesCountKey);
+	}
+
+	async incrementUsesCount() {
+		return await this.incrementKey(usesCountKey);
+	}
+
+	// Get current count of positive events
+	async getEventCount() {
+		return await this.getKey(eventCountKey);
+	}
+
+	// Increment count of positive events
+	async incrementEventCount() {
+		return await this.incrementKey(eventCountKey);
 	}
 
 	async getActionTimestamps() {
 		try {
-			let timestamps = await AsyncStorage.multiGet([ratedTimestamp, declinedTimestamp]);
+			let timestamps = await AsyncStorage.multiGet([ratedTimestamp, declinedTimestamp, lastSeenTimestamp]);
 
 			return timestamps;
 		} catch (ex) {
 			console.warn('Could not retrieve rated or declined timestamps.', ex);
+		}
+	}
+
+	async recordRatingSeen() {
+		try {
+			await AsyncStorage.setItem(lastSeenTimestamp, Date.now().toString());
+		} catch (ex) {
+			console.warn('Couldn\'t set declined timestamp.', ex);
 		}
 	}
 
@@ -63,15 +89,20 @@ class RatingsData {
 		}
 	}
 
+	async initializeKeyIfNull(key) {
+		let val = await AsyncStorage.getItem(key);
+		if (val === null) {
+			console.log('initializing ' + key);
+			await AsyncStorage.setItem(key, '0');
+		}
+	}
+
 	// Initialize keys, if necessary
 	async initialize() {
 		try {
-			let keys = await AsyncStorage.getAllKeys();
-
-			if (!keys.some((key) => key === eventCountKey)) {
-				// TODO: I don't think this actually ever gets executed...
-				console.log('Initializing blank values...');
-				await AsyncStorage.setItem(eventCountKey, '0');
+			let keys = [eventCountKey,usesCountKey];
+			for (var i = keys.length - 1; i >= 0; i--) {
+				await this.initializeKeyIfNull(keys[i]);
 			}
 		} catch (ex) {
 			// report error or maybe just initialize the values?
@@ -79,6 +110,12 @@ class RatingsData {
 		}
 	}
 
+	async clearKeys() {
+		let keys = [eventCountKey,usesCountKey];
+		for (var i = keys.length - 1; i >= 0; i--) {
+			await AsyncStorage.setItem(keys[i],'0');
+		}
+	}
 }
 
 export default new RatingsData();
