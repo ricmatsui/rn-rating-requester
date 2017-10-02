@@ -1,5 +1,10 @@
 A list of changes that have occured through the versions.
 
+3.0.0
+-----
+- Added support for native iOS ≥ 10.3 SKStoreReview displace
+- Fixed bug where even if review prompt was dismissed, it would be shown again.
+
 2.0.0
 -----
 
