@@ -1,6 +1,19 @@
-import React, { Platform, Alert, Linking } from 'react-native';
+import React, { Platform, Alert, Linking, NativeModules } from 'react-native';
 
 import RatingsData from './RatingsData';
+
+const { StoreReview } = NativeModules;
+const SKStoreReviewAvailable = !!StoreReview && StoreReview.SKStoreReviewAvailable;
+
+function requestReview() {
+  if (!StoreReview) {
+    throw new Error('StoreReview native module not available.');
+  }
+  if (!SKStoreReviewAvailable) {
+    throw new Error('StoreReview is not available on this version of iOS');
+  }
+  return StoreReview.requestReview();
+}
 
 const _config = {
 	title: 'Rate Me',
@@ -23,7 +36,7 @@ async function _isAwaitingRating() {
 	let rated = timestamps[0];
 	let declined = timestamps[1];
 	let daysSinceLastSeen = Math.floor((Date.now() - parseInt(timestamps[2]))/1000/60/60/24);
-	if (!_config.debug && [rated,declined].every((time) => time[1] !== null)) {
+	if (!_config.debug && [rated, declined].some((time) => time[1] !== null)) {
 		return false;
 	}
 
@@ -84,19 +97,24 @@ export default class RatingRequestor {
 			'http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=' + _config.iOSAppStoreId + '&pageNumber=0&sortOrdering=2&type=Purple+Software&mt=8' :
 			'market://details?id=' + _config.androidAppStoreId;
 
-		Alert.alert(
-			_config.title, 
-			_config.message, 
-			[
-				{ text: _config.actionLabels.accept, onPress: () => { 
-					RatingsData.recordRated(); 
-					callback(true, 'accept');
-					Linking.openURL(storeUrl);
-				} },
-				{ text: _config.actionLabels.delay, onPress: () => { callback(true, 'delay'); } },
-				{ text: _config.actionLabels.decline, onPress: () => { RatingsData.recordDecline(); callback(true, 'decline'); } },
-			]
-		);
+		if (SKStoreReviewAvailable) {
+			requestReview();
+		} else {
+			Alert.alert(
+				_config.title, 
+				_config.message, 
+				[
+					{ text: _config.actionLabels.accept, onPress: () => { 
+						RatingsData.recordRated(); 
+						callback(true, 'accept');
+						Linking.openURL(storeUrl);
+					} },
+					{ text: _config.actionLabels.delay, onPress: () => { callback(true, 'delay'); } },
+					{ text: _config.actionLabels.decline, onPress: () => { RatingsData.recordDecline(); callback(true, 'decline'); } },
+				]
+			);
+		}
+
 		// clear the events and uses
 		await RatingsData.clearKeys();
 	}

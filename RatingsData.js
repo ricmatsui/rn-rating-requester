@@ -111,7 +111,7 @@ class RatingsData {
 	}
 
 	async clearKeys() {
-		let keys = [eventCountKey,usesCountKey];
+		const keys = [eventCountKey,usesCountKey];
 		for (var i = keys.length - 1; i >= 0; i--) {
 			await AsyncStorage.setItem(keys[i],'0');
 		}
