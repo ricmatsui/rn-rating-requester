@@ -7,6 +7,8 @@ The Rating Requestor is a very simple JS module that you simply instantiate and 
 ## Installation
 
     npm i --save react-native-rating-requestor@github:rizzomichaelg/react-native-rating-requestor
+    
+    react-native link react-native-rating-requestor
 
 ## Usage
 
