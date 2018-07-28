@@ -87,8 +87,7 @@ You *must* pass in a string as the first parameter, which is the app store ID of
 - `enjoyingActions`: An object with three properties (all required if you don't want weird blanks or OKs):
   - `decline`: The "no thanks, your app sucks" button label
   - `accept`: The "yes I love this app so much" button label
-- `enjoyingAppCallback`: A callback called when a user chooses yes when asked if enjoying the app; this can be used for monitoring responses with analytics, for instance, if a user doesn't choose to rate the app but is nevertheless enjoying.
-- `notEnjoyingAppCallback`: A callback called when a user chooses no when asked if enjoying the app.
+- `callbacks`: Callbacks for various actions; see callbacks section above.
 - `title`: A string used as the title for the dialog (e.g., "Please rate me!")
 - `message`: The message you'd like to show the user (e.g., "If you are loving [my app's name], would you please leave me a positive review?")
 - `actionLabels`: An object with three properties (all required if you don't want weird blanks or OKs):
