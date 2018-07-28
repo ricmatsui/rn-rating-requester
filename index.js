@@ -55,7 +55,7 @@ export default class RatingRequestor {
 	 * @param  {string} androidAppStoreId - Required. The android ID used in the app's respective app store
 	 * @param  {object} options - Optional. Override the defaults. Takes the following shape, with all elements being optional:
 	 * 								{
-	 * 									enjoyingMessage: 'Are you enjoying this app?',
+	 * 									enjoyingMessage: {string},
 	 * 									enjoyingActions: {
 	 * 										accept: {string},
 	 * 										decline: {string},

@@ -55,29 +55,32 @@ All configuration occurs on the construction of a new RatingRequestor.
 
 You *must* pass in a string as the first parameter, which is the app store ID of your application. Optionally, but highly suggested, is a second parameter: a set of options to customize the request dialog and the timing of the dialog. This object follows this pattern:
 
-````json
+````javascript
 	{
-        enjoyingMessage: 'Are you enjoying this app?',
-        enjoyingActions: {
-            accept: 'Yes!',
-            decline: 'Not really',
-        },
-        callbacks: {
-          enjoyingApp: () => {},
-          notEnjoyingApp: () => {},
-          accept: () => {},
-          delay: () => {},
-          decline: () => {},
-        },
-    		title: {string},
-        message: {string},
-        actionLabels: {
-          decline: {string},
-          delay: {string},
-          accept: {string}
-        },
-        timingFunction: {func(currentCount) => boolean}
-	}
+    enjoyingMessage: {string},
+    enjoyingActions: {
+      accept: {string},
+      decline: {string},
+    },
+    callbacks: {
+      enjoyingApp: {function},
+      notEnjoyingApp: {function},
+      accept: {function},
+      delay: {function},
+      decline: {function},
+    },
+    title: {string},
+    message: {string},
+    actionLabels: {
+      decline: {string},
+      delay: {string},
+      accept: {string}
+    },
+    eventsUntilPrompt: {number},
+    usesUntilPrompt: {number},
+    daysBeforeReminding: {number},
+    debug: {bool},
+  }
 ````
 
 - `enjoyingMessage`: A string used as the dialog for are you enjoying this app,
