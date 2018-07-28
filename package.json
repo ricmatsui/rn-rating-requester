@@ -1,17 +1,17 @@
 {
-  "name": "react-native-rating-requestor",
-  "version": "3.0.0",
+  "name": "rn-rating-requestor",
+  "version": "3.1.0",
   "description": "A React Native component to prompt users for a rating after positive interactions",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prep-example": "cp ./* examples/RatingRequestorExample/node_modules/react-native-rating-requestor/",
-    "example-ios": "npm run prep-example; cd examples/RatingRequestorExample; react-native run-ios",
-    "example-android": "npm run prep-example; cd examples/RatingRequestorExample; react-native run-android"
+    "prep-example": "cd example && yarn && cd ../ && mkdir -p example/node_modules/rn-rating-requestor/ && tar -c --exclude .git --exclude example . | tar -x -C example/node_modules/rn-rating-requestor/ && cd example && react-native link rn-rating-requestor",
+    "example-ios": "npm run prep-example; cd example; react-native run-ios",
+    "example-android": "npm run prep-example; cd example; react-native run-android"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rizzomichaelg/react-native-rating-requestor.git"
+    "url": "git+https://github.com/rizzomichaelg/rn-rating-requestor.git"
   },
   "keywords": [
     "react",
@@ -22,13 +22,16 @@
     "ratings",
     "reviews"
   ],
-  "author": "Joshua Lyman",
+  "author": "Mike Rizzo",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/rizzomichaelg/react-native-rating-requestor/issues"
+    "url": "https://github.com/rizzomichaelg/rn-rating-requestor/issues"
   },
-  "homepage": "https://github.com/rizzomichaelg/react-native-rating-requestor#readme",
+  "homepage": "https://github.com/rizzomichaelg/rn-rating-requestor#readme",
   "peerDependencies": {
     "react-native": ">= 0.20.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.10"
   }
 }

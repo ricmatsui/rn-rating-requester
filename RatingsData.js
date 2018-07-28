@@ -1,6 +1,6 @@
 import React, { AsyncStorage } from 'react-native';
 
-const keyPrefix = '@RatingRequestData.';
+const keyPrefix = '@RNRatingRequest.';
 const eventCountKey = keyPrefix + 'EventCount';
 const usesCountKey = keyPrefix + 'usesCount';
 const ratedTimestamp = keyPrefix + 'ratedTimestamp';

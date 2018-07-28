@@ -1,5 +1,10 @@
 A list of changes that have occured through the versions.
 
+3.1.0
+-----
+- Added "Are you enjoying this app?" dialog to be display before requesting rating.
+- Better handling of native iOS Store Ratings dialog to suppress unwanted repeat requests.
+
 3.0.0
 -----
 - Added support for native iOS ≥ 10.3 SKStoreReview displace

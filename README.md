@@ -1,4 +1,4 @@
-# react-native-rating-requestor
+# rn-rating-requestor
 
 A React Native component to prompt users for a rating after positive interactions
 
@@ -6,16 +6,18 @@ The Rating Requestor is a very simple JS module that you simply instantiate and 
 
 ## Installation
 
-    npm i --save react-native-rating-requestor@github:rizzomichaelg/react-native-rating-requestor
+    npm i --save rn-rating-requestor@github:rizzomichaelg/rn-rating-requestor
     
-    react-native link react-native-rating-requestor
+    react-native link rn-rating-requestor
 
 ## Usage
+
+### Basics
 
 Import and create a new instantiation of the Rating Requestor somewhere in the main portion of your application:
 
 ````javascript
-    import RatingRequestor from 'react-native-rating-requestor';
+    import RatingRequestor from 'rn-rating-requestor';
     let RatingTracker = new RatingRequestor('[your ios app store ID]', '[your android app store id]');
 
     let MyApp = React.createClass({ ... });
@@ -28,22 +30,16 @@ When a positive UX event occurs, let the Rating Requestor know so that it can ke
 	}
 ````
 
-The example above is used without callback. A callback can be provided that reports on result of the handling. The callback accepts two parameters: the first indicates whether the request dialog appeared (boolean), and the second returns the user decision (string: 'decline', 'delay', or 'accept').
+### Callbacks
 
-	if (user_saved_the_world) {
-		RatingTracker.handlePositiveEvent(function(didAppear, userDecision) {
-			if (didAppear) {
-				switch(userDecision)
-				{
-					case 'decline': console.log('User declined to rate'); break;
-					case 'delay'  : console.log('User delayed rating, will be asked later'); break;
-					case 'accept' : console.log('User accepted invitation to rate, redirected to app store'); break;
-				}
-			} else {
-				console.log('Request popup did not pop up. May appear on future positive events.');
-			}
-		});
-	}
+Callbacks can be provided to the initial configuration to handle user actions. Available callbacks are 
+
+
+- **enjoyingApp**: Called when a user says that they are enjoying the app. You can use this to track user enjoyment if they say they are enjoying, but ultimately choose not to rate it
+- **notEnjoyingApp**: Called when a user says that they are not enjoying the app. You can use this, for example, to request feedback from the user to find out why they are not enjoying the app.
+- **accept**: Called when a user says that they will rate the app.
+- **delay**: Called when a user says they don't currently want to rate the app, but would like to later.
+- **decline**: Called when a user declines to rate the app, but after they have already said they are enjoying it.
 
 If enough positive events have occurred (defined by the `timingFunction`) then a rating dialog will pop up. The user can rate the app or decline to rate, in which case they won't be bothered again, or can choose to maybe do so later, in which case the Rating Requestor will keep on tracking positive event counts.
 
@@ -61,7 +57,19 @@ You *must* pass in a string as the first parameter, which is the app store ID of
 
 ````javascript
 	{
-		title: {string},
+        enjoyingMessage: 'Are you enjoying this app?',
+        enjoyingActions: {
+            accept: 'Yes!',
+            decline: 'Not really',
+        },
+        callbacks: {
+          enjoyingApp: () => {},
+          notEnjoyingApp: () => {},
+          accept: () => {},
+          delay: () => {},
+          decline: () => {},
+        },
+    		title: {string},
         message: {string},
         actionLabels: {
           decline: {string},
@@ -72,6 +80,12 @@ You *must* pass in a string as the first parameter, which is the app store ID of
 	}
 ````
 
+- `enjoyingMessage`: A string used as the dialog for are you enjoying this app,
+- `enjoyingActions`: An object with three properties (all required if you don't want weird blanks or OKs):
+  - `decline`: The "no thanks, your app sucks" button label
+  - `accept`: The "yes I love this app so much" button label
+- `enjoyingAppCallback`: A callback called when a user chooses yes when asked if enjoying the app; this can be used for monitoring responses with analytics, for instance, if a user doesn't choose to rate the app but is nevertheless enjoying.
+- `notEnjoyingAppCallback`: A callback called when a user chooses no when asked if enjoying the app.
 - `title`: A string used as the title for the dialog (e.g., "Please rate me!")
 - `message`: The message you'd like to show the user (e.g., "If you are loving [my app's name], would you please leave me a positive review?")
 - `actionLabels`: An object with three properties (all required if you don't want weird blanks or OKs):
@@ -86,15 +100,35 @@ timingFunction: function(currentCount) {
 }
 ```
 
+## Example
+
+To run the example, first run `yarn prep-example` then cd into the example directory and run as you normally would run an example project.
+
+NB: To run on android, you must have `$ANDROID_HOME` defined.
+
 ## Notes
 
 As of version 2.0.0 this package is compatible with both iOS and Android.
 
 ## Releases
 
-- 2.0.0 - Supports Android, requires RN v0.20.0+, and added `showRatingDialog()` thanks to [@maximilianhurl](https://github.com/maximilianhurl).
-- 1.1.0 - Added an optional callback to `handlePositiveEvent()` that reports on the result of the handling. Props to [@sercanov](https://github.com/sercanov).
-- 1.0.0 - Initial release
+### 3.1.0
+- Added "Are you enjoying this app?" dialog before actually requesting a rating.
+- **Breaking Changes**:
+  - Callbacks are now handled differently: see callbacks section and configuration for more details.
+
+### 3.0.0
+- Now supports iOS native SKStoreReviewController
+
+### 2.0.0
+- Supports Android, requires RN v0.20.0+, and added `showRatingDialog()` thanks to [@maximilianhurl](https://github.com/maximilianhurl).
+
+### 1.1.0
+- Added an optional callback to `handlePositiveEvent()` that reports on the result of the handling. Props to [@sercanov](https://github.com/
+sercanov).
+
+### 1.0.0
+- Initial release
 
 ## Questions?
 
