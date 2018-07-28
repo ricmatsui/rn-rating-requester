@@ -55,7 +55,7 @@ All configuration occurs on the construction of a new RatingRequestor.
 
 You *must* pass in a string as the first parameter, which is the app store ID of your application. Optionally, but highly suggested, is a second parameter: a set of options to customize the request dialog and the timing of the dialog. This object follows this pattern:
 
-````javascript
+````json
 	{
         enjoyingMessage: 'Are you enjoying this app?',
         enjoyingActions: {
