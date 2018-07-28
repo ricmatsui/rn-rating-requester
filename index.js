@@ -1,4 +1,5 @@
 import React, { Platform, Alert, Linking, NativeModules } from 'react-native';
+import _ from 'lodash';
 
 import RatingsData from './RatingsData';
 
@@ -15,13 +16,25 @@ function requestReview() {
   return StoreReview.requestReview();
 }
 
-const _config = {
-	title: 'Rate Me',
-	message: 'We hope you\'re loving our app. If you are, would you mind taking a quick moment to leave us a positive review?',
+const defaultConfig = {
+	enjoyingMessage: 'Are you enjoying this app?',
+	enjoyingActions: {
+		accept: 'Yes!',
+		decline: 'Not really',
+	},
+	callbacks: {
+		enjoyingApp: () => {},
+		notEnjoyingApp: () => {},
+		accept: () => {},
+		delay: () => {},
+		decline: () => {},
+	},
+	title: 'Rate Us!',
+	message: 'How about a rating on the app store?',
 	iOSAppStoreId: null,
 	androidAppStoreId: null,
 	actionLabels: {
-		accept: 'Rate',
+		accept: 'Ok, sure',
 		delay: 'Remind me later',
 		decline: 'No, thanks',
 	},
@@ -31,32 +44,29 @@ const _config = {
 	debug: false,
 };
 
-async function _isAwaitingRating() {
-	let timestamps = await RatingsData.getActionTimestamps();
-	let rated = timestamps[0];
-	let declined = timestamps[1];
-	let daysSinceLastSeen = Math.floor((Date.now() - parseInt(timestamps[2]))/1000/60/60/24);
-	if (!_config.debug && [rated, declined].some((time) => time[1] !== null)) {
-		return false;
-	}
-
-	let usesCount = await RatingsData.getUsesCount();
-	let eventCounts = await RatingsData.getEventCount();
-
-	return _config.debug || usesCount >= _config.usesUntilPrompt || eventCounts >= _config.eventsUntilPrompt || daysSinceLastSeen > _config.daysBeforeReminding;
-}
-
 /**
- * Creates the RatingRequestor object you interact with
+ * Creates the RatingRequester object you interact with
  * @class
  */
-export default class RatingRequestor {
+export default class RatingRequester {
 
 	/**
 	 * @param  {string} iOSAppStoreId - Required. The iOS ID used in the app's respective app store
 	 * @param  {string} androidAppStoreId - Required. The android ID used in the app's respective app store
 	 * @param  {object} options - Optional. Override the defaults. Takes the following shape, with all elements being optional:
 	 * 								{
+	 * 									enjoyingMessage: {string},
+	 * 									enjoyingActions: {
+	 * 										accept: {string},
+	 * 										decline: {string},
+	 * 									},
+	 * 									callbacks: {
+	 * 										enjoyingApp: {function},
+	 * 										notEnjoyingApp: {function},
+	 * 										accept: {function},
+	 * 										delay: {function},
+	 * 										decline: {function},
+	 * 									},
 	 * 									title: {string},
 	 * 									message: {string},
 	 * 									actionLabels: {
@@ -70,16 +80,40 @@ export default class RatingRequestor {
 	 *									debug: {bool},
 	 * 								}
 	 */
-	constructor(iOSAppStoreId, androidAppStoreId, options) {
+	constructor(iOSAppStoreId, androidAppStoreId, config) {
 		// Check for required options
 		if (!iOSAppStoreId || !androidAppStoreId) {
-			throw 'You must specify your app\'s store ID on construction to use the Rating Requestor.';
+			throw 'You must specify your app\'s store ID on construction to use the Rating Requester.';
 		}
 
 		// Merge defaults with user-supplied config
-		Object.assign(_config, options);
-		_config.iOSAppStoreId = iOSAppStoreId;
-		_config.androidAppStoreId = androidAppStoreId;
+		this.config = _.merge({}, defaultConfig, config);
+		this.config.iOSAppStoreId = iOSAppStoreId;
+		this.config.androidAppStoreId = androidAppStoreId;
+
+		this.isAwaitingRating = this.isAwaitingRating.bind(this);
+		_.bindAll(this,
+			'isAwaitingRating',
+			'showRatingDialog',
+			'checkToShowDialog',
+			'handleUse',
+			'handlePositiveEvent',
+		);
+	}
+
+	async isAwaitingRating() {
+		let timestamps = await RatingsData.getActionTimestamps();
+		let rated = timestamps[0];
+		let declined = timestamps[1];
+		let daysSinceLastSeen = Math.floor((Date.now() - parseInt(timestamps[2]))/1000/60/60/24);
+		if (!this.config.debug && [rated, declined].some((time) => time[1] !== null)) {
+			return false;
+		}
+
+		let usesCount = await RatingsData.getUsesCount();
+		let eventCounts = await RatingsData.getEventCount();
+
+		return this.config.debug || usesCount >= this.config.usesUntilPrompt || eventCounts >= this.config.eventsUntilPrompt || daysSinceLastSeen > this.config.daysBeforeReminding;
 	}
 
 	/**
@@ -88,53 +122,64 @@ export default class RatingRequestor {
 	 * the user for a rating too frequently or you might annoy them. (This is handy, however,
 	 * if the user proactively seeks out something in your app to leave a rating, for example.)
 	 *
-	 * @param {function(didAppear: boolean, result: string)} callback Optional. Callback that reports whether the dialog appeared and what the result was.
 	 */
-	async showRatingDialog(callback = () => {}) {
+	async showRatingDialog() {
 		await RatingsData.recordRatingSeen();
 
 		let storeUrl = Platform.OS === 'ios' ?
-			'http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=' + _config.iOSAppStoreId + '&pageNumber=0&sortOrdering=2&type=Purple+Software&mt=8' :
-			'market://details?id=' + _config.androidAppStoreId;
+			'http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=' + this.config.iOSAppStoreId + '&pageNumber=0&sortOrdering=2&type=Purple+Software&mt=8' :
+			'market://details?id=' + this.config.androidAppStoreId;
 
-		if (SKStoreReviewAvailable) {
-			requestReview();
-		} else {
-			Alert.alert(
-				_config.title, 
-				_config.message, 
-				[
-					{ text: _config.actionLabels.accept, onPress: () => { 
-						RatingsData.recordRated(); 
-						callback(true, 'accept');
-						Linking.openURL(storeUrl);
-					} },
-					{ text: _config.actionLabels.delay, onPress: () => { callback(true, 'delay'); } },
-					{ text: _config.actionLabels.decline, onPress: () => { RatingsData.recordDecline(); callback(true, 'decline'); } },
-				]
-			);
-		}
+		Alert.alert(
+			this.config.enjoyingMessage,
+			'',
+			[
+				{ text: this.config.enjoyingActions.accept, onPress: () => {
+					this.config.callbacks.enjoyingApp();
+					Alert.alert(
+						this.config.title, 
+						this.config.message, 
+						[
+							{ text: this.config.actionLabels.accept, onPress: () => { 
+								if (SKStoreReviewAvailable) {
+									requestReview();
+								} else {
+									Linking.openURL(storeUrl);
+								}
+								RatingsData.recordRated(); 
+								this.config.callbacks.accept();
+							} },
+							{ text: this.config.actionLabels.delay, onPress: () => { this.config.callbacks.delay(); } },
+							{ text: this.config.actionLabels.decline, onPress: () => { RatingsData.recordDecline(); this.config.callbacks.decline(); } },
+						]
+					);
+				}},
+				{ text: this.config.enjoyingActions.decline, onPress: () => {
+					RatingsData.recordDecline();
+					this.config.callbacks.notEnjoyingApp();
+				}, style: 'cancel'},
+			],
+		)
 
 		// clear the events and uses
 		await RatingsData.clearKeys();
 	}
-	async checkToShowDialog(callback = () => {}) {
-		if (await _isAwaitingRating()) {
-			this.showRatingDialog(callback);
-		} else callback(false);
+	async checkToShowDialog() {
+		if (await this.isAwaitingRating()) {
+			this.showRatingDialog();
+		}
 	}
-	async handleUse(callback) {
+	async handleUse() {
 		await RatingsData.incrementUsesCount();
-		await this.checkToShowDialog(callback);
+		await this.checkToShowDialog();
 	}
 	/**
 	 * Call when a positive interaction has occurred within your application. Depending on the number
 	 * of times this has occurred and your timing function, this may display a rating request dialog.
 	 *
-	 * @param {function(didAppear: boolean, result: string)} callback Optional. Callback that reports whether the dialog appeared and what the result was.
 	 */
-	async handlePositiveEvent(callback) {
+	async handlePositiveEvent() {
 		await RatingsData.incrementEventCount();
-		await this.checkToShowDialog(callback)
+		await this.checkToShowDialog()
 	}
 }
