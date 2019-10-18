@@ -1,4 +1,4 @@
-import React, { AsyncStorage } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 
 const keyPrefix = '@RNRatingRequest.';
 const eventCountKey = keyPrefix + 'EventCount';
